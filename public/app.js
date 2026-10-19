@@ -44,3 +44,9 @@ loginForm.addEventListener("submit", async (event) => {
    loginError.textContent = "";
    showUser(data);
 });
+
+document.getElementById("logout-button").addEventListener("click", async() => {
+  await fetch("/api/logout", {method: "POST"});
+  loginForm.reset();
+  showUser(null);
+});
