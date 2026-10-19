@@ -34,6 +34,13 @@ db.exec(`
     y REAL NOT NULL DEFAULT 0.5,
     scale REAL NOT NULL DEFAULT 1
   );
-`);
 
+
+CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+`);
 module.exports = db;
