@@ -50,3 +50,28 @@ document.getElementById("logout-button").addEventListener("click", async() => {
   loginForm.reset();
   showUser(null);
 });
+
+const registerForm = document.getElementById("register-form");
+
+registerForm.addEventListener("submit", async (event) =>{
+  event.preventDefault();
+  const username = document.getElementById("register-username").value;
+  const password = document.getElementById("register-password").value;
+
+  const response = await fetch("/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({username, password}),
+  });
+  const data = await response.json();
+
+  const registerError = document.getElementById("register-error");
+  if (!response.ok){
+    registerError.textContent = data.error;
+    return;
+  }
+
+  registerError.tectContent = "";
+  registerForm.reset;
+  showUser(data);
+});

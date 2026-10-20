@@ -23,13 +23,26 @@
     <button type="submit">Logga in</button>
   </form>
   <p id="login-error" role="alert"></p>
+
+  <form id="register-form">
+  <h2>Skapa konto</h2>
+
+  <label for="register-username">Användarnamn</label>
+  <input id="register-username" name="username" type="text" required minlength="3" maxlength="30">
+
+  <label for="register-password">Lösenord</label>
+  <input id="register-password" name="password" type="password" required minlength="6">
+
+  <button type="submit">Skapa konto</button>
+</form>
+<p id="register-error" role="alert"></p>
   </section>
 
   <section id="logged-in" hidden>
     <p>Inloggad som <strong id="current-user"></strong></p>
     <button id="logout-button" type="button">Logga ut</button>  
   </section>
-  
+
   <script src="app.js"></script>
 </body>
 </html>
