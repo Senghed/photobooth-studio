@@ -1,10 +1,15 @@
 const express = require("express");
 const db = require("./db");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
 const {hashPassword, verifyPassword, createSession, destroySession, loadUser, requireLogin}= require("./auth");
 const app = express();
 
 app.use(express.json());
 app.use(express.static("public"));
+fs.mkdirSync("uploads", {recursive: true});
+app.use("/uploads", express.static("uploads"));
 app.use(loadUser);
 
 app.get("/api/ping", (req, res) => res.json({ ok: true}));
@@ -55,11 +60,22 @@ app.post("/api/logout", (req, res) => {
     res.json({ok: true});
 });
 
+function imageExtension(buf) {
+    if (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return ".jpg";
+   if (buf.length > 4 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return ".png";
+}
+
 app.post("/api/photos", requireLogin, express.raw({ type: "image/*", limit: "10mb" }), (req, res) => {
     if (!Buffer.isBuffer(req.body)){ 
         return res.status(400).json({error: "Skicka en bild."});
     }
-    res.status(201).json({ bytes: req.body.length});
+  const ext = imageExtension(req.body);
+    if (!ext) {
+        return res.status(400).json({ error: "Bara JPEG- och PNG-bilder tillåts." });
+    }
+    const fileName = crypto.randomBytes(16).toString("hex") + ext;
+    fs.writeFileSync(path.join("uploads", fileName), req.body);
+    res.status(201).json({ file: "/uploads/" + fileName, bytes: req.body.length });
 });
 
 app.listen(3000, () => console.log("http://localhost:3000"));
