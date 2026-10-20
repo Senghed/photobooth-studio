@@ -1,6 +1,6 @@
 const express = require("express");
 const db = require("./db");
-const {hashPassword, verifyPassword, createSession, destroySession, loadUser}= require("./auth");
+const {hashPassword, verifyPassword, createSession, destroySession, loadUser, requireLogin}= require("./auth");
 const app = express();
 
 app.use(express.json());
@@ -53,6 +53,13 @@ app.get("/api/me", (req, res) => {
 app.post("/api/logout", (req, res) => {
     destroySession(req, res);
     res.json({ok: true});
+});
+
+app.post("/api/photos", requireLogin, express.raw({ type: "image/*", limit: "10mb" }), (req, res) => {
+    if (!Buffer.isBuffer(req.body)){ 
+        return res.status(400).json({error: "Skicka en bild."});
+    }
+    res.status(201).json({ bytes: req.body.length});
 });
 
 app.listen(3000, () => console.log("http://localhost:3000"));

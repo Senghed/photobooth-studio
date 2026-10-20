@@ -41,6 +41,12 @@
   <section id="logged-in" hidden>
     <p>Inloggad som <strong id="current-user"></strong></p>
     <button id="logout-button" type="button">Logga ut</button>  
+  
+    <h2>Ladda upp foto</h2>
+    <label for="photo-input">Ta eller välj ett foto</label>
+    <input id="photo-input" type="file" accept="image/*" capture="environment">
+    <p id="upload-status" role="status"></p>
+
   </section>
 
   <script src="app.js"></script>

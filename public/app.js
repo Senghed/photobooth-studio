@@ -71,7 +71,29 @@ registerForm.addEventListener("submit", async (event) =>{
     return;
   }
 
-  registerError.tectContent = "";
-  registerForm.reset;
+  registerError.textContent = "";
+  registerForm.reset();
   showUser(data);
+});
+
+const photoInput = document.getElementById("photo-input");
+const uploadStatus = document.getElementById("upload-status");
+
+photoInput.addEventListener("change", async () =>{
+  const file = photoInput.files[0];
+  if(!file) return;
+  uploadStatus.textContent = `Vald fil: ${file.name} (${Math.round(file.size/ 1024)} kb, ${file.type})`;
+
+  const response = await fetch("/api/photos", {
+    method: "POST",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  const data = await response.json();
+
+  if(!response.ok) {
+    uploadStatus.textContent = data.error;
+    return;
+  }
+  uploadStatus.textContent = `Uppladdad: ${data.bytes} bytes`;
 });
