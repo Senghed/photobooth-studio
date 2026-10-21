@@ -74,8 +74,17 @@ app.post("/api/photos", requireLogin, express.raw({ type: "image/*", limit: "10m
         return res.status(400).json({ error: "Bara JPEG- och PNG-bilder tillåts." });
     }
     const fileName = crypto.randomBytes(16).toString("hex") + ext;
-    fs.writeFileSync(path.join("uploads", fileName), req.body);
-    res.status(201).json({ file: "/uploads/" + fileName, bytes: req.body.length });
+       fs.writeFileSync(path.join("uploads", fileName), req.body);
+
+    const result = db
+        .prepare("INSERT INTO photos (user_id, file_path, title) VALUES (?, ?, ?)")
+        .run(req.user.id, "/uploads/" + fileName, "Namnlöst foto");
+
+    res.status(201).json({
+        id: Number(result.lastInsertRowid),
+        file: "/uploads/" + fileName,
+        bytes: req.body.length,
+    });
 });
 
 app.listen(3000, () => console.log("http://localhost:3000"));
