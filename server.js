@@ -89,7 +89,7 @@ app.post("/api/photos", requireLogin, express.raw({ type: "image/*", limit: "10m
 
 app.get("/api/photos", requireLogin, (req, res) =>{
     const photos = db.prepare(`
-        SELECT photos.id, photos.file_path, photos.title, photos.created_at, users.username
+        SELECT photos.id, photos.user_id, photos.file_path, photos.title, photos.created_at, users.username
         FROM photos
         JOIN users ON users.id = photos.user_id
         WHERE photos.status = 'visible'
@@ -97,6 +97,26 @@ app.get("/api/photos", requireLogin, (req, res) =>{
         `)
         .all();
         res.json(photos);
+});
+
+app.delete("/api/photos/:id", requireLogin, (req, res) =>{
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+        return res.status(400).json({ error: "Ogiltigt id."});
+    }
+    const photo = db
+    .prepare("SELECT id, user_id, file_path FROM photos WHERE id = ?")
+    .get(id);
+    if(!photo) {
+        return res.status(404).json({ error: "Bilden finns inte."});
+    }
+    if (photo.user_id !== req.user.id && req.user.role !== "admin"){
+        return res.status(403).json({error: " Du får bara ta bort egna bilder."});
+    }
+
+    db.prepare("DELETE FROM photos WHERE id = ?").run(id);
+    fs.rmSync(path.join("uploads", path.basename(photo.file_path)), {force: true});
+    res.json({ ok: true });
 });
 
 app.listen(3000, () => console.log("http://localhost:3000"));

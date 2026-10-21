@@ -1,8 +1,10 @@
+let currentUser = null;
 const statusText = document.getElementById("status");
 const loggedOut = document.getElementById("logged-out");
 const loggedIn = document.getElementById("logged-in");
 
 function showUser(user) {
+  currentUser = user;
   statusText.hidden = true;
   if(user) {
     document.getElementById("current-user").textContent = user.username;
@@ -131,6 +133,22 @@ async function loadPhotos() {
     caption.textContent = `${photo.title} av ${photo.username}`;
 
     item.append(img, caption);
+    
+    if (currentUser && (currentUser.id === photo.user_id || currentUser.role === "admin")) {
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.textContent = "Ta bort";
+      deleteButton.addEventListener("click", async() =>{
+        const response = await fetch(`/api/photos/${photo.id}`, {method: "DELETE"});
+        if (!response.ok){
+          const data = await response.json();
+          galleryStatus.textContent = data.error;
+          return;
+        }
+        loadPhotos();
+      });
+      item.append(deleteButton);
+    }
     gallery.append(item);
   }
 }
