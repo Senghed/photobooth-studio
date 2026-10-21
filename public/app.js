@@ -8,6 +8,7 @@ function showUser(user) {
     document.getElementById("current-user").textContent = user.username;
     loggedIn.hidden = false;
     loggedOut.hidden = true;
+    loadPhotos();
   } else {
     loggedIn.hidden = true;
     loggedOut.hidden = false;
@@ -96,4 +97,40 @@ photoInput.addEventListener("change", async () =>{
     return;
   }
   uploadStatus.textContent = `Uppladdad: ${data.bytes} bytes`;
+  loadPhotos();
 });
+
+const gallery = document.getElementById("gallery");
+const galleryStatus = document.getElementById("gallery-status");
+
+async function loadPhotos() {
+  galleryStatus.textContent = "Laddar bilder...";
+  const response = await fetch("/api/photos");
+  const photos = await response.json();
+
+  if(!response.ok){
+    galleryStatus.textContent = photos.error;
+    return;
+  }
+
+  gallery.replaceChildren();
+  if (photos.length === 0) {
+    galleryStatus.textContent = "Inga bilder än.";
+    return;
+  }
+  galleryStatus.textContent = "";
+
+  for(const photo of photos) {
+    const item = document.createElement("li");
+
+    const img = document.createElement("img");
+    img.src = photo.file_path;
+    img.alt = photo.title;
+
+    const caption = document.createElement("p");
+    caption.textContent = `${photo.title} av ${photo.username}`;
+
+    item.append(img, caption);
+    gallery.append(item);
+  }
+}

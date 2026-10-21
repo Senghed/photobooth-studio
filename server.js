@@ -87,4 +87,16 @@ app.post("/api/photos", requireLogin, express.raw({ type: "image/*", limit: "10m
     });
 });
 
+app.get("/api/photos", requireLogin, (req, res) =>{
+    const photos = db.prepare(`
+        SELECT photos.id, photos.file_path, photos.title, photos.created_at, users.username
+        FROM photos
+        JOIN users ON users.id = photos.user_id
+        WHERE photos.status = 'visible'
+        ORDER BY photos.created_at DESC, photos.id DESC
+        `)
+        .all();
+        res.json(photos);
+});
+
 app.listen(3000, () => console.log("http://localhost:3000"));
