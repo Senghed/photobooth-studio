@@ -242,4 +242,15 @@ app.put("/api/photos/:id/status", requireAdmin, (req, res) => {
     res.json({ id, status});
 });
 
+app.use("/api", (req, res) => {
+    res.status(404).json({ error: "Okänd adress." });
+});
+
+app.use((err, req, res, next) => {
+    console.error(err);
+    const status = err.status || 500;
+    const message = status === 500 ? "Något gick fel på servern." : "Ogiltig förfrågan.";
+    res.status(status).json({ error: message });
+});
+
 app.listen(3000, () => console.log("http://localhost:3000"));

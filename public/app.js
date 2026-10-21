@@ -1,3 +1,19 @@
+async function api(url, options) {
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch {
+    return { ok: false, data: { error: "Kunde inte nå servern. Försök igen." } };
+  }
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = { error: "Ogiltigt svar från servern." };
+  }
+  return { ok: response.ok, data };
+}
+
 let currentUser = null;
 const statusText = document.getElementById("status");
 const loggedOut = document.getElementById("logged-out");
@@ -6,7 +22,7 @@ const loggedIn = document.getElementById("logged-in");
 function showUser(user) {
   currentUser = user;
   statusText.hidden = true;
-  if(user) {
+  if (user) {
     document.getElementById("current-user").textContent = user.username;
     loggedIn.hidden = false;
     loggedOut.hidden = true;
@@ -17,9 +33,12 @@ function showUser(user) {
   }
 }
 
-async function loadMe(){
-  const response = await fetch("/api/me");
-  const data = await response.json();
+async function loadMe() {
+  const { ok, data } = await api("/api/me");
+  if (!ok) {
+    statusText.textContent = data.error;
+    return;
+  }
   showUser(data.user);
 }
 
@@ -32,44 +51,46 @@ loginForm.addEventListener("submit", async (event) => {
   const username = document.getElementById("login-username").value;
   const password = document.getElementById("login-password").value;
 
-  const response = await fetch("/api/login", {
+  const { ok, data } = await api("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({username, password}),  
+    body: JSON.stringify({ username, password }),
   });
-   const data = await response.json();
 
-   const loginError = document.getElementById("login-error");
-   if (!response.ok){
+  const loginError = document.getElementById("login-error");
+  if (!ok) {
     loginError.textContent = data.error;
     return;
-   }
-   loginError.textContent = "";
-   showUser(data);
+  }
+  loginError.textContent = "";
+  showUser(data);
 });
 
-document.getElementById("logout-button").addEventListener("click", async() => {
-  await fetch("/api/logout", {method: "POST"});
+document.getElementById("logout-button").addEventListener("click", async () => {
+  const { ok, data } = await api("/api/logout", { method: "POST" });
+  if (!ok) {
+    uploadStatus.textContent = data.error;
+    return;
+  }
   loginForm.reset();
   showUser(null);
 });
 
 const registerForm = document.getElementById("register-form");
 
-registerForm.addEventListener("submit", async (event) =>{
+registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const username = document.getElementById("register-username").value;
   const password = document.getElementById("register-password").value;
 
-  const response = await fetch("/api/register", {
+  const { ok, data } = await api("/api/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({username, password}),
+    body: JSON.stringify({ username, password }),
   });
-  const data = await response.json();
 
   const registerError = document.getElementById("register-error");
-  if (!response.ok){
+  if (!ok) {
     registerError.textContent = data.error;
     return;
   }
@@ -82,19 +103,18 @@ registerForm.addEventListener("submit", async (event) =>{
 const photoInput = document.getElementById("photo-input");
 const uploadStatus = document.getElementById("upload-status");
 
-photoInput.addEventListener("change", async () =>{
+photoInput.addEventListener("change", async () => {
   const file = photoInput.files[0];
-  if(!file) return;
-  uploadStatus.textContent = `Vald fil: ${file.name} (${Math.round(file.size/ 1024)} kb, ${file.type})`;
+  if (!file) return;
+  uploadStatus.textContent = `Vald fil: ${file.name} (${Math.round(file.size / 1024)} kb, ${file.type})`;
 
-  const response = await fetch("/api/photos", {
+  const { ok, data } = await api("/api/photos", {
     method: "POST",
     headers: { "Content-Type": file.type },
     body: file,
   });
-  const data = await response.json();
 
-  if(!response.ok) {
+  if (!ok) {
     uploadStatus.textContent = data.error;
     return;
   }
@@ -127,25 +147,24 @@ function loadGallery() {
   renderPhotos("/api/photos?" + params, gallery, galleryStatus, emptyText, false);
 }
 
-async function loadAdmin(){
+async function loadAdmin() {
   adminStatus.textContent = "Laddar bilder...";
-  const response = await fetch("/api/admin/photos");
-  const photos = await response.json();
+  const { ok, data: photos } = await api("/api/admin/photos");
 
-  if(!response.ok) {
+  if (!ok) {
     adminStatus.textContent = photos.error;
     return;
   }
 
   adminList.replaceChildren();
-  if(photos.length === 0) {
+  if (photos.length === 0) {
     adminStatus.textContent = "Inga publicerade bilder att moderera.";
     return;
   }
   adminStatus.textContent = "";
 
-  for(const photo of photos) {
-    const item= document.createElement("li");
+  for (const photo of photos) {
+    const item = document.createElement("li");
 
     const img = document.createElement("img");
     img.src = photo.file_path;
@@ -158,13 +177,12 @@ async function loadAdmin(){
     toggleButton.type = "button";
     toggleButton.textContent = photo.status === "hidden" ? "Visa" : "Dölj";
     toggleButton.addEventListener("click", async () => {
-      const response = await fetch(`/api/photos/${photo.id}/status`, {
+      const { ok, data } = await api(`/api/photos/${photo.id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: photo.status === "hidden" ? "visible" : "hidden" }),
       });
-      if (!response.ok) {
-        const data = await response.json();
+      if (!ok) {
         adminStatus.textContent = data.error;
         return;
       }
@@ -182,7 +200,7 @@ function loadPhotos() {
   loadGallery();
   const isAdmin = currentUser && currentUser.role === "admin";
   adminPanel.hidden = !isAdmin;
-  if(isAdmin) {
+  if (isAdmin) {
     loadAdmin();
   }
 }
@@ -196,10 +214,9 @@ sortSelect.addEventListener("change", loadGallery);
 
 async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
   statusElement.textContent = "Laddar bilder...";
-  const response = await fetch(url);
-  const photos = await response.json();
+  const { ok, data: photos } = await api(url);
 
-  if (!response.ok) {
+  if (!ok) {
     statusElement.textContent = photos.error;
     return;
   }
@@ -226,18 +243,17 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
 
     item.append(img, caption);
 
-    if(showStatus) {
+    if (showStatus) {
       const publishButton = document.createElement("button");
       publishButton.type = "button";
       publishButton.textContent = photo.published ? "Avpublicera" : "Publicera";
-      publishButton.addEventListener("click", async () =>{
-        const response = await fetch(`/api/photos/${photo.id}/published`,{
+      publishButton.addEventListener("click", async () => {
+        const { ok, data } = await api(`/api/photos/${photo.id}/published`, {
           method: "PUT",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({published: !photo.published}),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ published: !photo.published }),
         });
-        if (!response.ok){
-          const data = await response.json();
+        if (!ok) {
           statusElement.textContent = data.error;
           return;
         }
@@ -246,7 +262,7 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
       item.append(publishButton);
     }
 
-        if (showStatus) {
+    if (showStatus) {
       const titleForm = document.createElement("form");
 
       const titleLabel = document.createElement("label");
@@ -265,13 +281,12 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
       titleForm.append(titleLabel, saveButton);
       titleForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const response = await fetch(`/api/photos/${photo.id}/title`, {
+        const { ok, data } = await api(`/api/photos/${photo.id}/title`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: titleInput.value }),
         });
-        if (!response.ok) {
-          const data = await response.json();
+        if (!ok) {
           statusElement.textContent = data.error;
           return;
         }
@@ -285,9 +300,8 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
       deleteButton.type = "button";
       deleteButton.textContent = "Ta bort";
       deleteButton.addEventListener("click", async () => {
-        const response = await fetch(`/api/photos/${photo.id}`, { method: "DELETE" });
-        if (!response.ok) {
-          const data = await response.json();
+        const { ok, data } = await api(`/api/photos/${photo.id}`, { method: "DELETE" });
+        if (!ok) {
           statusElement.textContent = data.error;
           return;
         }
