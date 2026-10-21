@@ -1,3 +1,4 @@
-#gallery img {
+#gallery img,
+#my-photos img {
     max-width: 200px;
 }

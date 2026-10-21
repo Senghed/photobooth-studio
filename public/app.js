@@ -104,25 +104,32 @@ photoInput.addEventListener("change", async () =>{
 
 const gallery = document.getElementById("gallery");
 const galleryStatus = document.getElementById("gallery-status");
+const myPhotos = document.getElementById("my-photos");
+const myStatus = document.getElementById("my-status");
 
-async function loadPhotos() {
-  galleryStatus.textContent = "Laddar bilder...";
-  const response = await fetch("/api/photos");
+function loadPhotos() {
+  renderPhotos("/api/photos?mine=1", myPhotos, myStatus, "Du har inga bilder än.", true);
+  renderPhotos("/api/photos", gallery, galleryStatus, "Inga publicerade bilder än.", false);
+}
+
+async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
+  statusElement.textContent = "Laddar bilder...";
+  const response = await fetch(url);
   const photos = await response.json();
 
-  if(!response.ok){
-    galleryStatus.textContent = photos.error;
+  if (!response.ok) {
+    statusElement.textContent = photos.error;
     return;
   }
 
-  gallery.replaceChildren();
+  list.replaceChildren();
   if (photos.length === 0) {
-    galleryStatus.textContent = "Inga bilder än.";
+    statusElement.textContent = emptyText;
     return;
   }
-  galleryStatus.textContent = "";
+  statusElement.textContent = "";
 
-  for(const photo of photos) {
+  for (const photo of photos) {
     const item = document.createElement("li");
 
     const img = document.createElement("img");
@@ -131,24 +138,28 @@ async function loadPhotos() {
 
     const caption = document.createElement("p");
     caption.textContent = `${photo.title} av ${photo.username}`;
+    if (showStatus) {
+      caption.textContent += photo.published ? " (publicerad)" : " (privat)";
+    }
 
     item.append(img, caption);
-    
+
     if (currentUser && (currentUser.id === photo.user_id || currentUser.role === "admin")) {
       const deleteButton = document.createElement("button");
       deleteButton.type = "button";
       deleteButton.textContent = "Ta bort";
-      deleteButton.addEventListener("click", async() =>{
-        const response = await fetch(`/api/photos/${photo.id}`, {method: "DELETE"});
-        if (!response.ok){
+      deleteButton.addEventListener("click", async () => {
+        const response = await fetch(`/api/photos/${photo.id}`, { method: "DELETE" });
+        if (!response.ok) {
           const data = await response.json();
-          galleryStatus.textContent = data.error;
+          statusElement.textContent = data.error;
           return;
         }
         loadPhotos();
       });
       item.append(deleteButton);
     }
-    gallery.append(item);
+
+    list.append(item);
   }
 }

@@ -87,16 +87,42 @@ app.post("/api/photos", requireLogin, express.raw({ type: "image/*", limit: "10m
     });
 });
 
-app.get("/api/photos", requireLogin, (req, res) =>{
-    const photos = db.prepare(`
-        SELECT photos.id, photos.user_id, photos.file_path, photos.title, photos.created_at, users.username
+app.get("/api/photos", requireLogin, (req, res) => {
+    const search = String(req.query.search || "").trim();
+    const mine = req.query.mine === "1";
+
+    const sortOptions = {
+        newest: "photos.created_at DESC, photos.id DESC",
+        oldest: "photos.created_at ASC, photos.id ASC",
+        title: "photos.title COLLATE NOCASE ASC, photos.id ASC",
+    };
+    const orderBy = Object.hasOwn(sortOptions, req.query.sort)
+        ? sortOptions[req.query.sort]
+        : sortOptions.newest;
+
+    const conditions = [];
+    const params = [];
+
+    if (mine) {
+        conditions.push("photos.user_id = ?");
+        params.push(req.user.id);
+    } else {
+        conditions.push("photos.status = 'visible'", "photos.published = 1");
+    }
+    if (search) {
+        conditions.push("(photos.title LIKE ? OR users.username LIKE ?)");
+        params.push(`%${search}%`, `%${search}%`);
+    }
+
+    const sql = `
+        SELECT photos.id, photos.user_id, photos.file_path, photos.title,
+               photos.published, photos.status, photos.created_at, users.username
         FROM photos
         JOIN users ON users.id = photos.user_id
-        WHERE photos.status = 'visible'
-        ORDER BY photos.created_at DESC, photos.id DESC
-        `)
-        .all();
-        res.json(photos);
+        WHERE ${conditions.join(" AND ")}
+        ORDER BY ${orderBy}
+    `;
+    res.json(db.prepare(sql).all(...params));
 });
 
 app.delete("/api/photos/:id", requireLogin, (req, res) =>{
@@ -117,6 +143,27 @@ app.delete("/api/photos/:id", requireLogin, (req, res) =>{
     db.prepare("DELETE FROM photos WHERE id = ?").run(id);
     fs.rmSync(path.join("uploads", path.basename(photo.file_path)), {force: true});
     res.json({ ok: true });
+});
+
+app.put("/api/photos/:id/published", requireLogin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)){
+        return res.status(400).json({ error: "Ogiltigt id."});
+    }
+
+    const photo = db
+        .prepare("SELECT id, user_id FROM photos WHERE id = ?")
+        .get(id);
+    if(!photo){
+        return res.status(404).json({error: "Bilden finns inte."});
+    }
+    if (photo.user_id !== req.user.id) {
+        return res.status(403).json({ error: "Bara ägaren kan publicera en bild"});
+    }
+
+    const published = req.body.published === true ? 1 : 0;
+    db.prepare("UPDATE photos SET published = ? WHERE id = ?").run(published, id);
+    res.json({id, published});
 });
 
 app.listen(3000, () => console.log("http://localhost:3000"));

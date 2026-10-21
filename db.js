@@ -22,6 +22,7 @@ db.exec(`
     filter TEXT NOT NULL DEFAULT 'none',
     filter_amount REAL NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'visible' CHECK (status IN ('visible', 'hidden')),
+    published INTEGER NOT NULL DEFAULT 0 CHECK (published IN (0, 1)),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 

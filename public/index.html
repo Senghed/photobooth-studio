@@ -1,51 +1,57 @@
 <!DOCTYPE html>
 <html lang="sv">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PhotoBooth Studio</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <h1>PhotoBooth Studio</h1>
   <p id="status">Laddar...</p>
 
   <section id="logged-out" hidden>
-  <form id="login-form">
-    <h2>Logga in</h2>
+    <form id="login-form">
+      <h2>Logga in</h2>
 
-    <label for="login-username">Användarnamn</label>
-    <input id="login-username" name="username" type="text" required>
+      <label for="login-username">Användarnamn</label>
+      <input id="login-username" name="username" type="text" required>
 
-    <label for="login-password">Lösenord</label>
-    <input id="login-password" name="password" type="password" required>
+      <label for="login-password">Lösenord</label>
+      <input id="login-password" name="password" type="password" required>
 
-    <button type="submit">Logga in</button>
-  </form>
-  <p id="login-error" role="alert"></p>
+      <button type="submit">Logga in</button>
+    </form>
+    <p id="login-error" role="alert"></p>
 
-  <form id="register-form">
-  <h2>Skapa konto</h2>
+    <form id="register-form">
+      <h2>Skapa konto</h2>
 
-  <label for="register-username">Användarnamn</label>
-  <input id="register-username" name="username" type="text" required minlength="3" maxlength="30">
+      <label for="register-username">Användarnamn</label>
+      <input id="register-username" name="username" type="text" required minlength="3" maxlength="30">
 
-  <label for="register-password">Lösenord</label>
-  <input id="register-password" name="password" type="password" required minlength="6">
+      <label for="register-password">Lösenord</label>
+      <input id="register-password" name="password" type="password" required minlength="6">
 
-  <button type="submit">Skapa konto</button>
-</form>
-<p id="register-error" role="alert"></p>
+      <button type="submit">Skapa konto</button>
+    </form>
+    <p id="register-error" role="alert"></p>
   </section>
 
   <section id="logged-in" hidden>
     <p>Inloggad som <strong id="current-user"></strong></p>
-    <button id="logout-button" type="button">Logga ut</button>  
-  
+    <button id="logout-button" type="button">Logga ut</button>
+
     <h2>Ladda upp foto</h2>
     <label for="photo-input">Ta eller välj ett foto</label>
     <input id="photo-input" type="file" accept="image/*" capture="environment">
     <p id="upload-status" role="status"></p>
+
+    <h2>Mina bilder</h2>
+    <p id="my-status" role="status"></p>
+    <ul id="my-photos"></ul>
 
     <h2>Galleri</h2>
     <p id="gallery-status" role="status"></p>
@@ -54,4 +60,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>
