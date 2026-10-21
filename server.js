@@ -9,7 +9,6 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 fs.mkdirSync("uploads", {recursive: true});
-app.use("/uploads", express.static("uploads"));
 app.use(loadUser);
 
 app.get("/api/ping", (req, res) => res.json({ ok: true}));
@@ -188,6 +187,25 @@ app.put("/api/photos/:id/title", requireLogin, (req, res) =>{
 
     db.prepare("UPDATE photos SET title = ? WHERE id = ?").run(title, id);
     res.json({id, title});
+});
+
+app.get("/uploads/:name", requireLogin, (req, res) => {
+    const name = path.basename(req.params.name);
+    const photo = db
+        .prepare("SELECT user_id, published, status FROM photos WHERE file_path = ?")
+        .get("/uploads/" + name);
+        if (!photo) {
+            return res.status(404).json({error: "Bilden finns inte."});
+        }
+
+        const isOwner = photo.user_id === req.user.id;
+        const isAdmin = req.user.role === "admin";
+        const isPublic = photo.published === 1 && photo.status === "visible";
+        if (!isOwner && !isAdmin && !isPublic ){
+            return res.status(403).json({ error: "Du har inte åtkomst till den här bilden."});
+        }
+
+        res.sendFile(name, { root: path.resolve("uploads")});
 });
 
 app.listen(3000, () => console.log("http://localhost:3000"));
