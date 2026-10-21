@@ -54,8 +54,19 @@
     <ul id="my-photos"></ul>
 
     <h2>Galleri</h2>
-    <p id="gallery-status" role="status"></p>
-    <ul id="gallery"></ul>
+
+<label for="search-input">Sök titel eller användare</label>
+<input id="search-input" type="search">
+
+<label for="sort-select">Sortera</label>
+<select id="sort-select">
+  <option value="newest">Nyast först</option>
+  <option value="oldest">Äldst först</option>
+  <option value="title">Titel A-Ö</option>
+</select>
+
+<p id="gallery-status" role="status"></p>
+<ul id="gallery"></ul>
   </section>
 
   <script src="app.js"></script>

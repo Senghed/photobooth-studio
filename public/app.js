@@ -106,11 +106,35 @@ const gallery = document.getElementById("gallery");
 const galleryStatus = document.getElementById("gallery-status");
 const myPhotos = document.getElementById("my-photos");
 const myStatus = document.getElementById("my-status");
+const searchInput = document.getElementById("search-input");
+const sortSelect = document.getElementById("sort-select");
+
+function loadMyPhotos() {
+  renderPhotos("/api/photos?mine=1", myPhotos, myStatus, "Du har inga bilder än.", true);
+}
+
+function loadGallery() {
+  const params = new URLSearchParams({
+    search: searchInput.value,
+    sort: sortSelect.value,
+  });
+  const emptyText = searchInput.value.trim()
+    ? "Inga bilder matchar sökningen."
+    : "Inga publicerade bilder än.";
+  renderPhotos("/api/photos?" + params, gallery, galleryStatus, emptyText, false);
+}
 
 function loadPhotos() {
-  renderPhotos("/api/photos?mine=1", myPhotos, myStatus, "Du har inga bilder än.", true);
-  renderPhotos("/api/photos", gallery, galleryStatus, "Inga publicerade bilder än.", false);
+  loadMyPhotos();
+  loadGallery();
 }
+
+let searchTimer;
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadGallery, 300);
+});
+sortSelect.addEventListener("change", loadGallery);
 
 async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
   statusElement.textContent = "Laddar bilder...";

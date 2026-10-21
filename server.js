@@ -166,4 +166,28 @@ app.put("/api/photos/:id/published", requireLogin, (req, res) => {
     res.json({id, published});
 });
 
+app.put("/api/photos/:id/title", requireLogin, (req, res) =>{
+    const id = Number(req.params.id);
+    if(!Number.isInteger(id)) {
+        return res.status(400).json( {error: "Ogiltigt id."});
+    }
+
+    const title = String(req.body.title||"").trim();
+    if (title.length < 1|| title.length > 60) {
+        return res.status(400).json({error: "Titeln måste vara 1-60 tecken."});
+    }
+    const photo = db
+        .prepare("SELECT id, user_id FROM photos WHERE id =?")
+        .get(id);
+    if(!photo){
+        return res.status(404).json({error:"Bilden finns inte."});
+    }
+    if (photo.user_id !== req.user.id){
+        return res.status(403).json({error: "Bara ägaren kan ändra titeln."});
+    }
+
+    db.prepare("UPDATE photos SET title = ? WHERE id = ?").run(title, id);
+    res.json({id, title});
+});
+
 app.listen(3000, () => console.log("http://localhost:3000"));
