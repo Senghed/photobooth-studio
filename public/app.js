@@ -108,6 +108,9 @@ const myPhotos = document.getElementById("my-photos");
 const myStatus = document.getElementById("my-status");
 const searchInput = document.getElementById("search-input");
 const sortSelect = document.getElementById("sort-select");
+const adminPanel = document.getElementById("admin-panel");
+const adminStatus = document.getElementById("admin-status");
+const adminList = document.getElementById("admin-list");
 
 function loadMyPhotos() {
   renderPhotos("/api/photos?mine=1", myPhotos, myStatus, "Du har inga bilder än.", true);
@@ -124,9 +127,64 @@ function loadGallery() {
   renderPhotos("/api/photos?" + params, gallery, galleryStatus, emptyText, false);
 }
 
+async function loadAdmin(){
+  adminStatus.textContent = "Laddar bilder...";
+  const response = await fetch("/api/admin/photos");
+  const photos = await response.json();
+
+  if(!response.ok) {
+    adminStatus.textContent = photos.error;
+    return;
+  }
+
+  adminList.replaceChildren();
+  if(photos.length === 0) {
+    adminStatus.textContent = "Inga publicerade bilder att moderera.";
+    return;
+  }
+  adminStatus.textContent = "";
+
+  for(const photo of photos) {
+    const item= document.createElement("li");
+
+    const img = document.createElement("img");
+    img.src = photo.file_path;
+    img.alt = photo.title;
+
+    const caption = document.createElement("p");
+    caption.textContent = `${photo.title} av ${photo.username} (${photo.status === "hidden" ? "dold" : "synlig"})`;
+
+    const toggleButton = document.createElement("button");
+    toggleButton.type = "button";
+    toggleButton.textContent = photo.status === "hidden" ? "Visa" : "Dölj";
+    toggleButton.addEventListener("click", async () => {
+      const response = await fetch(`/api/photos/${photo.id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: photo.status === "hidden" ? "visible" : "hidden" }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        adminStatus.textContent = data.error;
+        return;
+      }
+      loadPhotos();
+    });
+
+    item.append(img, caption, toggleButton);
+    adminList.append(item);
+  }
+}
+
+
 function loadPhotos() {
   loadMyPhotos();
   loadGallery();
+  const isAdmin = currentUser && currentUser.role === "admin";
+  adminPanel.hidden = !isAdmin;
+  if(isAdmin) {
+    loadAdmin();
+  }
 }
 
 let searchTimer;

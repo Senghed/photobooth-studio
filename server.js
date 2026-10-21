@@ -3,7 +3,7 @@ const db = require("./db");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const {hashPassword, verifyPassword, createSession, destroySession, loadUser, requireLogin}= require("./auth");
+const {hashPassword, verifyPassword, createSession, destroySession, loadUser, requireLogin, requireAdmin}= require("./auth");
 const app = express();
 
 app.use(express.json());
@@ -206,6 +206,40 @@ app.get("/uploads/:name", requireLogin, (req, res) => {
         }
 
         res.sendFile(name, { root: path.resolve("uploads")});
+});
+
+app.get("/api/admin/photos", requireAdmin, (req, res) =>{
+    const photos = db
+        .prepare(`
+            SELECT photos.id, photos.user_id, photos.file_path, photos.title,
+                   photos.published, photos.status, photos.created_at, users.username
+            FROM photos
+            JOIN users ON users.id = photos.user_id
+            WHERE photos.published =1
+            ORDER BY photos.created_at DESC, photos.id DESC
+        `)
+        .all();
+    res.json(photos);
+});
+
+app.put("/api/photos/:id/status", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if(!Number.isInteger(id)) {
+        return res.status(400).json({ error: "Ogiltigt id."});
+    }
+
+    const status = req.body.status;
+    if (status !== "visible" && status !== "hidden"){
+        return res.status(400).json({ error: "Ogiltigt status."});
+    }
+
+    const result = db
+        .prepare("UPDATE photos SET status = ? WHERE id = ?")
+        .run(status, id);
+    if(result.changes === 0) {
+        return res.status(404).json({ error: "Bilden finns inte."});
+    }
+    res.json({ id, status});
 });
 
 app.listen(3000, () => console.log("http://localhost:3000"));

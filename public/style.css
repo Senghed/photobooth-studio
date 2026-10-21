@@ -1,4 +1,5 @@
 #gallery img,
-#my-photos img {
+#my-photos img,
+#admin-list img {
     max-width: 200px;
 }

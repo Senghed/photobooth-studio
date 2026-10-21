@@ -55,18 +55,24 @@
 
     <h2>Galleri</h2>
 
-<label for="search-input">Sök titel eller användare</label>
-<input id="search-input" type="search">
+    <label for="search-input">Sök titel eller användare</label>
+    <input id="search-input" type="search">
 
-<label for="sort-select">Sortera</label>
-<select id="sort-select">
-  <option value="newest">Nyast först</option>
-  <option value="oldest">Äldst först</option>
-  <option value="title">Titel A-Ö</option>
-</select>
+    <label for="sort-select">Sortera</label>
+    <select id="sort-select">
+      <option value="newest">Nyast först</option>
+      <option value="oldest">Äldst först</option>
+      <option value="title">Titel A-Ö</option>
+    </select>
 
-<p id="gallery-status" role="status"></p>
-<ul id="gallery"></ul>
+    <p id="gallery-status" role="status"></p>
+    <ul id="gallery"></ul>
+
+    <section id="admin-panel" hidden>
+      <h2>Moderering</h2>
+      <p id="admin-status" role="status"></p>
+      <ul id="admin-list"></ul>
+    </section>
   </section>
 
   <script src="app.js"></script>
