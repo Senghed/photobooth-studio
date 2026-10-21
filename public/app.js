@@ -188,6 +188,40 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
       item.append(publishButton);
     }
 
+        if (showStatus) {
+      const titleForm = document.createElement("form");
+
+      const titleLabel = document.createElement("label");
+      titleLabel.textContent = "Titel ";
+      const titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.value = photo.title;
+      titleInput.maxLength = 60;
+      titleInput.required = true;
+      titleLabel.append(titleInput);
+
+      const saveButton = document.createElement("button");
+      saveButton.type = "submit";
+      saveButton.textContent = "Spara titel";
+
+      titleForm.append(titleLabel, saveButton);
+      titleForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const response = await fetch(`/api/photos/${photo.id}/title`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: titleInput.value }),
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          statusElement.textContent = data.error;
+          return;
+        }
+        loadPhotos();
+      });
+      item.append(titleForm);
+    }
+
     if (currentUser && (currentUser.id === photo.user_id || currentUser.role === "admin")) {
       const deleteButton = document.createElement("button");
       deleteButton.type = "button";
