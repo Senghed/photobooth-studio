@@ -144,6 +144,26 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
 
     item.append(img, caption);
 
+    if(showStatus) {
+      const publishButton = document.createElement("button");
+      publishButton.type = "button";
+      publishButton.textContent = photo.published ? "Avpublicera" : "Publicera";
+      publishButton.addEventListener("click", async () =>{
+        const response = await fetch(`/api/photos/${photo.id}/published`,{
+          method: "PUT",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({published: !photo.published}),
+        });
+        if (!response.ok){
+          const data = await response.json();
+          statusElement.textContent = data.error;
+          return;
+        }
+        loadPhotos();
+      });
+      item.append(publishButton);
+    }
+
     if (currentUser && (currentUser.id === photo.user_id || currentUser.role === "admin")) {
       const deleteButton = document.createElement("button");
       deleteButton.type = "button";
