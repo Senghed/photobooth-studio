@@ -115,7 +115,8 @@ app.get("/api/photos", requireLogin, (req, res) => {
 
     const sql = `
         SELECT photos.id, photos.user_id, photos.file_path, photos.title,
-               photos.published, photos.status, photos.created_at, users.username
+               photos.published, photos.status, photos.created_at, users.username,
+               photos.filter, photos.filter_amount
         FROM photos
         JOIN users ON users.id = photos.user_id
         WHERE ${conditions.join(" AND ")}
@@ -189,6 +190,38 @@ app.put("/api/photos/:id/title", requireLogin, (req, res) =>{
     res.json({id, title});
 });
 
+app.put("/api/photos/:id/filter", requireLogin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+        return res.status(400).json({ error: "Ogiltigt id." });
+    }
+
+    const allowedFilters = ["none", "grayscale", "sepia", "invert"];
+    const filter = req.body.filter;
+    if (!allowedFilters.includes(filter)) {
+        return res.status(400).json({ error: "Ogiltigt filter." });
+    }
+
+    const amount = req.body.amount;
+    if (typeof amount !== "number" || amount < 0 || amount > 1) {
+        return res.status(400).json({ error: "Styrkan måste vara ett tal mellan 0 och 1." });
+    }
+
+    const photo = db
+        .prepare("SELECT id, user_id FROM photos WHERE id = ?")
+        .get(id);
+    if (!photo) {
+        return res.status(404).json({ error: "Bilden finns inte." });
+    }
+    if (photo.user_id !== req.user.id) {
+        return res.status(403).json({ error: "Bara ägaren kan ändra bilden." });
+    }
+
+    db.prepare("UPDATE photos SET filter = ?, filter_amount = ? WHERE id = ?")
+        .run(filter, amount, id);
+    res.json({ id, filter, amount });
+});
+
 app.get("/uploads/:name", requireLogin, (req, res) => {
     const name = path.basename(req.params.name);
     const photo = db
@@ -212,7 +245,8 @@ app.get("/api/admin/photos", requireAdmin, (req, res) =>{
     const photos = db
         .prepare(`
             SELECT photos.id, photos.user_id, photos.file_path, photos.title,
-                   photos.published, photos.status, photos.created_at, users.username
+                   photos.published, photos.status, photos.created_at, users.username,
+                   photos.filter, photos.filter_amount
             FROM photos
             JOIN users ON users.id = photos.user_id
             WHERE photos.published =1
