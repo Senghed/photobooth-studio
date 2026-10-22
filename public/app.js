@@ -234,7 +234,7 @@ async function loadAdmin() {
     img.alt = photo.title;
     img.style.filter = filterCss(photo.filter, photo.filter_amount);
 
-    const caption = document.createElement("p");
+    const caption = document.createElement("figcaption");
     caption.textContent = `${photo.title} av ${photo.username} (${photo.status === "hidden" ? "dold" : "synlig"})`;
 
     const toggleButton = document.createElement("button");
@@ -253,7 +253,14 @@ async function loadAdmin() {
       loadPhotos();
     });
 
-    item.append(img, caption, toggleButton);
+    const figure = document.createElement("figure");
+    figure.append(img, caption);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    actions.append(toggleButton);
+
+    item.append(figure, actions);
     adminList.append(item);
   }
 }
@@ -300,13 +307,19 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
     img.alt = photo.title;
     img.style.filter = filterCss(photo.filter, photo.filter_amount);
 
-    const caption = document.createElement("p");
+    const caption = document.createElement("figcaption");
     caption.textContent = `${photo.title} av ${photo.username}`;
     if (showStatus) {
       caption.textContent += photo.published ? " (publicerad)" : " (privat)";
     }
 
-    item.append(img, caption);
+    const figure = document.createElement("figure");
+    figure.append(img, caption);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    item.append(figure, actions);
 
     if (showStatus) {
       const publishButton = document.createElement("button");
@@ -324,13 +337,13 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
         }
         loadPhotos();
       });
-      item.append(publishButton);
+      actions.append(publishButton);
 
       const editButton = document.createElement("button");
       editButton.type = "button";
       editButton.textContent = "Redigera";
       editButton.addEventListener("click", () => openEditor(photo));
-      item.append(editButton);
+      actions.append(editButton);
     }
 
     if (showStatus) {
@@ -363,7 +376,7 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
         }
         loadPhotos();
       });
-      item.append(titleForm);
+      actions.append(titleForm);
     }
 
     if (currentUser && (currentUser.id === photo.user_id || currentUser.role === "admin")) {
@@ -378,7 +391,7 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
         }
         loadPhotos();
       });
-      item.append(deleteButton);
+      actions.append(deleteButton);
     }
 
     list.append(item);
