@@ -78,9 +78,10 @@
     </div>
 
     <section id="editor" hidden>
-      <button id="editor-back" type="button">Tillbaka</button>
       <h2 id="editor-title"></h2>
-      <img id="editor-image" alt="">
+      <figure id="editor-frame">
+        <img id="editor-image" alt="">
+      </figure>
       <label for="filter-select">Filter</label>
       <select id="filter-select">
         <option value="none">Inget</option>
@@ -91,7 +92,10 @@
 
       <label for="filter-amount">Styrka</label>
       <input id="filter-amount" type="range" min="0" max="100" value="100">
-      <button id="filter-save" type="button">Spara filter</button>
+      <div class="editor-actions">
+        <button id="filter-save" type="button">Spara filter</button>
+        <button id="editor-back" type="button">Tillbaka</button>
+      </div>
       <p id="editor-status" role="status"></p>
     </section>
   </section>
