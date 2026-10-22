@@ -14,6 +14,10 @@ async function api(url, options) {
   return { ok: response.ok, data };
 }
 
+function filterCss(filter, amount) {
+  return filter === "none" ? "none" : `${filter}(${amount})`;
+}
+
 let currentUser = null;
 const statusText = document.getElementById("status");
 const loggedOut = document.getElementById("logged-out");
@@ -43,9 +47,7 @@ function openEditor(photo) {
 }
 
 function updatePreview() {
-  const amount = Number(filterAmount.value) / 100;
-  editorImage.style.filter =
-    filterSelect.value === "none" ? "none" : `${filterSelect.value}(${amount})`;
+  editorImage.style.filter = filterCss(filterSelect.value, Number(filterAmount.value) / 100);
 }
 
 filterSelect.addEventListener("change", () => {
@@ -230,6 +232,7 @@ async function loadAdmin() {
     const img = document.createElement("img");
     img.src = photo.file_path;
     img.alt = photo.title;
+    img.style.filter = filterCss(photo.filter, photo.filter_amount);
 
     const caption = document.createElement("p");
     caption.textContent = `${photo.title} av ${photo.username} (${photo.status === "hidden" ? "dold" : "synlig"})`;
@@ -295,6 +298,7 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
     const img = document.createElement("img");
     img.src = photo.file_path;
     img.alt = photo.title;
+    img.style.filter = filterCss(photo.filter, photo.filter_amount);
 
     const caption = document.createElement("p");
     caption.textContent = `${photo.title} av ${photo.username}`;
