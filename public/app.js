@@ -353,6 +353,8 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
       titleLabel.textContent = "Titel ";
       const titleInput = document.createElement("input");
       titleInput.type = "text";
+      titleInput.name = "title";
+      titleInput.autocomplete = "off";
       titleInput.value = photo.title;
       titleInput.maxLength = 60;
       titleInput.required = true;
