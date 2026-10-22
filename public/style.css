@@ -288,3 +288,42 @@ input[type="range"] {
         grid-template-columns: 1fr;
     }
 }
+
+.photo-frame {
+    position: relative;
+}
+
+.sticker-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sticker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: clamp(1.5rem, 8vw, 2.5rem);
+    line-height: 1;
+}
+
+#editor-photo {
+    cursor: crosshair;
+}
+
+#sticker-palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+#sticker-palette button {
+    font-size: 1.5rem;
+    line-height: 1;
+    background: var(--surface-2);
+}
+
+#sticker-palette button[aria-pressed="true"] {
+    background: var(--red);
+    outline: 2px solid var(--gold);
+}

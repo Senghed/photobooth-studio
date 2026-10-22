@@ -18,6 +18,20 @@ function filterCss(filter, amount) {
   return filter === "none" ? "none" : `${filter}(${amount})`;
 }
 
+function stickerLayer(stickers) {
+  const layer = document.createElement("div");
+  layer.className = "sticker-layer";
+  for (const sticker of stickers) {
+    const span = document.createElement("span");
+    span.className = "sticker";
+    span.textContent = sticker.content;
+    span.style.left = `${sticker.x * 100}%`;
+    span.style.top = `${sticker.y * 100}%`;
+    layer.append(span);
+  }
+  return layer;
+}
+
 let currentUser = null;
 const statusText = document.getElementById("status");
 const loggedOut = document.getElementById("logged-out");
@@ -31,6 +45,7 @@ const filterSelect = document.getElementById("filter-select");
 const filterAmount = document.getElementById("filter-amount");
 const filterSave = document.getElementById("filter-save");
 const editorStatus = document.getElementById("editor-status");
+const editorPhoto = document.getElementById("editor-photo");
 let editingPhoto = null;
 
 function openEditor(photo) {
@@ -41,6 +56,7 @@ function openEditor(photo) {
   editorTitle.textContent = photo.title;
   editorImage.src = photo.file_path;
   editorImage.alt = photo.title;
+  editorPhoto.replaceChildren(editorImage, stickerLayer(photo.stickers));
   filterSelect.value = photo.filter;
   filterAmount.value = Math.round(photo.filter_amount * 100);
   updatePreview();
@@ -74,11 +90,66 @@ filterSave.addEventListener("click", async () => {
   editorStatus.textContent = "Filtret sparades.";
 });
 
+let selectedSticker = "⭐";
+
+editorPhoto.addEventListener("click", async (event) => {
+  const rect = editorImage.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / rect.width;
+  const y = (event.clientY - rect.top) / rect.height;
+
+  const { ok, data } = await api(`/api/photos/${editingPhoto.id}/stickers`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: selectedSticker, x, y }),
+  });
+  if (!ok) {
+    editorStatus.textContent = data.error;
+    return;
+  }
+  editingPhoto.stickers.push({ id: data.id, kind: "emoji", content: selectedSticker, x, y, scale: 1 });
+  editorPhoto.replaceChildren(editorImage, stickerLayer(editingPhoto.stickers));
+});
+
 editorBack.addEventListener("click", () => {
   editor.hidden = true;
   overview.hidden = false;
   loadPhotos();
 });
+
+const stickerUndo = document.getElementById("sticker-undo");
+
+stickerUndo.addEventListener("click", async () => {
+  const last = editingPhoto.stickers[editingPhoto.stickers.length - 1];
+  if (!last) {
+    editorStatus.textContent = "Inga klistermärken att ta bort.";
+    return;
+  }
+  const { ok, data } = await api(`/api/stickers/${last.id}`, { method: "DELETE" });
+  if (!ok) {
+    editorStatus.textContent = data.error;
+    return;
+  }
+  editingPhoto.stickers.pop();
+  editorPhoto.replaceChildren(editorImage, stickerLayer(editingPhoto.stickers));
+});
+
+const stickerChoices = ["⭐", "❤️", "😎", "🎩", "🎃", "👻", "🔥", "🎉"];
+const stickerPalette = document.getElementById("sticker-palette");
+
+for (const emoji of stickerChoices) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = emoji;
+  button.setAttribute("aria-label", `Klistermärke ${emoji}`);
+  button.setAttribute("aria-pressed", String(emoji === selectedSticker));
+  button.addEventListener("click", () => {
+    selectedSticker = emoji;
+    for (const other of stickerPalette.children) {
+      other.setAttribute("aria-pressed", String(other === button));
+    }
+  });
+  stickerPalette.append(button);
+}
 
 function showUser(user) {
   currentUser = user;
@@ -253,8 +324,12 @@ async function loadAdmin() {
       loadPhotos();
     });
 
+    const frame = document.createElement("div");
+    frame.className = "photo-frame";
+    frame.append(img, stickerLayer(photo.stickers));
+
     const figure = document.createElement("figure");
-    figure.append(img, caption);
+    figure.append(frame, caption);
 
     const actions = document.createElement("div");
     actions.className = "actions";
@@ -313,8 +388,12 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
       caption.textContent += photo.published ? " (publicerad)" : " (privat)";
     }
 
+    const frame = document.createElement("div");
+    frame.className = "photo-frame";
+    frame.append(img, stickerLayer(photo.stickers));
+
     const figure = document.createElement("figure");
-    figure.append(img, caption);
+    figure.append(frame, caption);
 
     const actions = document.createElement("div");
     actions.className = "actions";

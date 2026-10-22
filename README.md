@@ -1,6 +1,6 @@
 # PhotoBooth Studio
 
-A web-based photo studio where logged-in users upload photos, apply filters to them, and choose whether to publish them to a shared gallery. An admin can moderate published photos. This is a course project and uses synthetic data only.
+A web-based photo studio where logged-in users upload photos, apply filters to them, and choose to publish them to a shared gallery. An admin can moderate published photos.
 
 The user interface is in Swedish.
 
@@ -16,11 +16,19 @@ The user interface is in Swedish.
 - Photo editor with filters (grayscale, sepia, invert) and an intensity slider, with live preview. The filter is saved per photo
 - Admin: see all published photos, hide and show them, and delete photos
 - Clear loading, empty, validation error and server error states
+- Stickers: choose an emoji and click on the photo in the editor to place it. Stickers are saved and shown in all lists. The last sticker can be undone
+
+## Design and accessibility
+
+- Cinema and photobooth theme: marquee sign header, polaroid-style photo frames, dark red and gold colors
+- Responsive layout, tested from desktop down to a 320 px wide screen
+- Accessible: labelled form fields, visible keyboard focus, `<main>` landmark, status messages with `role="status"`, reduced-motion respected
+- Lighthouse (mobile): Accessibility 100, Best Practices 100, SEO 100, Performance 98
 
 ## Tech stack
 
 - Backend: Node.js, Express, better-sqlite3 (SQLite)
-- Frontend: plain JavaScript, HTML and CSS (no JavaScript libraries)
+- Frontend: JavaScript, HTML and CSS (no JavaScript libraries)
 - Database: SQLite file at `data/photobooth.db` (created automatically)
 - Uploaded images: files in `uploads/`, served only to logged-in users with the right permissions
 
@@ -36,7 +44,7 @@ npm start
 
 Then open http://localhost:3000.
 
-`npm run seed` fills the database with demo users and five example photos. The photos are fetched from [Lorem Picsum](https://picsum.photos), so an internet connection is needed when the seed script runs (and only then). The script can be run several times without creating duplicates.
+`npm run seed` fills the database with demo users and five example photos. The photos are fetched from [Lorem Picsum](https://picsum.photos), so an internet connection is needed when the seed script runs. The script can be run several times without creating duplicates.
 
 For development, `npm run dev` restarts the server when files change.
 
@@ -48,18 +56,21 @@ For development, `npm run dev` restarts the server when files change.
 | anna     | anna123  | user  |
 | erik     | erik123  | user  |
 
-These are made-up accounts for demonstration and must never be used in a real environment.
+These are made-up accounts for demonstration.
 
 ## Project structure
 
 ```
-server.js       The Express app and all API routes
-db.js           Database connection and tables
-auth.js         Password hashing, sessions and permission checks
-seed.js         Creates demo users and example photos
-public/         Frontend (index.html, app.js, style.css)
-data/           The SQLite database (created on first start, not in git)
-uploads/        Uploaded images (not in git)
+server.js            The Express app and all API routes
+db.js                Database connection and tables
+auth.js              Password hashing, sessions and permission checks
+seed.js              Creates demo users and example photos
+public/              Frontend, served as static files
+  index.html           The page structure
+  app.js               Browser logic: fetch calls, rendering, editor
+  style.css            Styling
+data/                The SQLite database (created on first start, not in git)
+uploads/             Uploaded images (not in git)
 ```
 
 ## Database
@@ -87,6 +98,8 @@ All routes respond with JSON. Errors have the form `{ "error": "..." }`.
 | PUT    | /api/photos/:id/published   | owner            | Publish or unpublish                     |
 | PUT    | /api/photos/:id/title       | owner            | Change title                             |
 | PUT    | /api/photos/:id/filter      | owner            | Save filter and intensity                |
+| POST   | /api/photos/:id/stickers    | owner            | Add a sticker (emoji, x, y as 0–1)       |
+| DELETE | /api/stickers/:id           | owner            | Remove a sticker                         |
 | GET    | /uploads/:name              | see below        | Image file                               |
 | GET    | /api/admin/photos           | admin            | All published photos                     |
 | PUT    | /api/photos/:id/status      | admin            | Hide or show a photo                     |
@@ -100,4 +113,10 @@ An image file can be fetched by its owner, by an admin, or by any logged-in user
 - All SQL queries use parameters (`?`) to prevent SQL injection
 - Sorting uses a whitelist of allowed values
 - Uploaded files are checked by content (JPEG/PNG), get random file names, and are served only after a permission check
-- User-provided text is rendered with
+- User-provided text is rendered with `textContent`, never `innerHTML`
+
+## Known limitations
+
+- Filters are a visual effect applied over the original image in the browser. The original file is never modified
+- No email verification or password reset
+- Stickers cannot be moved or resized after placing. Only the most recent sticker can be undone

@@ -84,7 +84,9 @@
       <section id="editor" hidden>
         <h2 id="editor-title"></h2>
         <figure id="editor-frame">
-          <img id="editor-image" alt="">
+          <div id="editor-photo" class="photo-frame">
+            <img id="editor-image" alt="">
+          </div>
         </figure>
         <label for="filter-select">Filter</label>
         <select id="filter-select">
@@ -96,8 +98,10 @@
 
         <label for="filter-amount">Styrka</label>
         <input id="filter-amount" type="range" min="0" max="100" value="100">
+        <div id="sticker-palette" role="group" aria-label="Välj klistermärke"></div>
         <div class="editor-actions">
           <button id="filter-save" type="button">Spara filter</button>
+          <button type="button" id="sticker-undo">Ångra klistermärke</button>
           <button id="editor-back" type="button">Tillbaka</button>
         </div>
         <p id="editor-status" role="status"></p>
