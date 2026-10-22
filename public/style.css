@@ -25,7 +25,7 @@
 
 body {
     margin: 0 auto;
-    padding: 1.5rem 1rem 3rem;
+    padding: 1.5rem 1.75rem 3rem;
     max-width: 1100px;
     background: var(--bg);
     color: var(--text);
@@ -95,17 +95,13 @@ h1::before {
     }
 }
 
-#editor-image {
-    max-width: 100%;
-}
-
 /* Rutnät med kort */
 :is(#my-photos, #gallery, #admin-list) {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
     gap: 1.5rem;
 }
 
@@ -203,7 +199,15 @@ select {
 #logged-out form {
     display: grid;
     gap: 0.4rem;
-    max-width: 22rem;
+}
+
+#logged-out {
+    max-width: 360px;
+    margin: 2rem auto;
+}
+
+#logged-out h2 {
+    text-align: center;
 }
 
 #login-error,
@@ -259,4 +263,28 @@ input[type="range"] {
 #logged-in>p:first-child {
     display: inline-block;
     margin: 0 1rem 0 0;
+}
+
+#overview>label {
+    display: inline-block;
+    margin: 0.25rem 0.5rem 0.25rem 0;
+}
+
+#overview>input[type="search"] {
+    margin-right: 1rem;
+}
+
+@media (max-width: 420px) {
+    body {
+        padding-inline: 1.5rem;
+    }
+
+    h1 {
+        padding: 1rem;
+        letter-spacing: 0.12em;
+    }
+
+    :is(#my-photos, #gallery, #admin-list) {
+        grid-template-columns: 1fr;
+    }
 }
