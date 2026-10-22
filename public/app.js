@@ -18,9 +18,70 @@ let currentUser = null;
 const statusText = document.getElementById("status");
 const loggedOut = document.getElementById("logged-out");
 const loggedIn = document.getElementById("logged-in");
+const overview = document.getElementById("overview");
+const editor = document.getElementById("editor");
+const editorBack = document.getElementById("editor-back");
+const editorTitle = document.getElementById("editor-title");
+const editorImage = document.getElementById("editor-image");
+const filterSelect = document.getElementById("filter-select");
+const filterAmount = document.getElementById("filter-amount");
+const filterSave = document.getElementById("filter-save");
+const editorStatus = document.getElementById("editor-status");
+let editingPhoto = null;
+
+function openEditor(photo) {
+  editingPhoto = photo;
+  editorStatus.textContent = "";
+  overview.hidden = true;
+  editor.hidden = false;
+  editorTitle.textContent = photo.title;
+  editorImage.src = photo.file_path;
+  editorImage.alt = photo.title;
+  filterSelect.value = photo.filter;
+  filterAmount.value = Math.round(photo.filter_amount * 100);
+  updatePreview();
+}
+
+function updatePreview() {
+  const amount = Number(filterAmount.value) / 100;
+  editorImage.style.filter =
+    filterSelect.value === "none" ? "none" : `${filterSelect.value}(${amount})`;
+}
+
+filterSelect.addEventListener("change", () => {
+  if (filterSelect.value !== "none" && Number(filterAmount.value) === 0) {
+    filterAmount.value = 100;
+  }
+  updatePreview();
+});
+filterAmount.addEventListener("input", updatePreview);
+
+filterSave.addEventListener("click", async () => {
+  const { ok, data } = await api(`/api/photos/${editingPhoto.id}/filter`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      filter: filterSelect.value,
+      amount: Number(filterAmount.value) / 100,
+    }),
+  });
+  if (!ok) {
+    editorStatus.textContent = data.error;
+    return;
+  }
+  editorStatus.textContent = "Filtret sparades.";
+});
+
+editorBack.addEventListener("click", () => {
+  editor.hidden = true;
+  overview.hidden = false;
+  loadPhotos();
+});
 
 function showUser(user) {
   currentUser = user;
+  editor.hidden = true;
+  overview.hidden = false;
   statusText.hidden = true;
   if (user) {
     document.getElementById("current-user").textContent = user.username;
@@ -260,6 +321,12 @@ async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
         loadPhotos();
       });
       item.append(publishButton);
+
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.textContent = "Redigera";
+      editButton.addEventListener("click", () => openEditor(photo));
+      item.append(editButton);
     }
 
     if (showStatus) {

@@ -3,3 +3,5 @@
 #admin-list img {
     max-width: 200px;
 }
+
+#editor-image { max-width: 100%; }
