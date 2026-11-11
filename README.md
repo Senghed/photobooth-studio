@@ -1,6 +1,8 @@
 # PhotoBooth Studio
 
-![Editorn med filter och klistermärken](docs/editor.png)
+<p align="center">
+  <img src="docs/editor.png" alt="Editorn med filter och klistermärken" width="600">
+</p>
 
 A web-based photo studio where logged-in users upload photos, apply filters to them, and choose to publish them to a shared gallery. An admin can moderate published photos.
 
