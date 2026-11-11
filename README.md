@@ -1,5 +1,7 @@
 # PhotoBooth Studio
 
+![Editorn med filter och klistermärken](docs/editor.png)
+
 A web-based photo studio where logged-in users upload photos, apply filters to them, and choose to publish them to a shared gallery. An admin can moderate published photos.
 
 The user interface is in Swedish.
