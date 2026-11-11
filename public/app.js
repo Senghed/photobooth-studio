@@ -1,3 +1,4 @@
+//Fetch wrapper, kollar nätverksfel och inte giltiga json retrun ok och json
 async function api(url, options) {
   let response;
   try {
@@ -14,10 +15,12 @@ async function api(url, options) {
   return { ok: response.ok, data };
 }
 
+//gör css filter från namn och styrka(browser funktion)
 function filterCss(filter, amount) {
   return filter === "none" ? "none" : `${filter}(${amount})`;
 }
 
+//Ritar ett fotos sticker som ett layer(span)
 function stickerLayer(stickers) {
   const layer = document.createElement("div");
   layer.className = "sticker-layer";
@@ -32,6 +35,7 @@ function stickerLayer(stickers) {
   return layer;
 }
 
+// referenser till elements på sidan
 let currentUser = null;
 const statusText = document.getElementById("status");
 const loggedOut = document.getElementById("logged-out");
@@ -48,6 +52,7 @@ const editorStatus = document.getElementById("editor-status");
 const editorPhoto = document.getElementById("editor-photo");
 let editingPhoto = null;
 
+//öppnar editorn för ett foto
 function openEditor(photo) {
   editingPhoto = photo;
   editorStatus.textContent = "";
@@ -62,18 +67,22 @@ function openEditor(photo) {
   updatePreview();
 }
 
+//visar filter live i editorn
 function updatePreview() {
   editorImage.style.filter = filterCss(filterSelect.value, Number(filterAmount.value) / 100);
 }
 
+//lyssnare till välja filter 
 filterSelect.addEventListener("change", () => {
   if (filterSelect.value !== "none" && Number(filterAmount.value) === 0) {
     filterAmount.value = 100;
   }
   updatePreview();
 });
+//slider styrka filter
 filterAmount.addEventListener("input", updatePreview);
 
+//sparar filter till server
 filterSave.addEventListener("click", async () => {
   const { ok, data } = await api(`/api/photos/${editingPhoto.id}/filter`, {
     method: "PUT",
@@ -92,6 +101,7 @@ filterSave.addEventListener("click", async () => {
 
 let selectedSticker = "⭐";
 
+//lyssanre för klick på fotot för att placera sticker
 editorPhoto.addEventListener("click", async (event) => {
   const rect = editorImage.getBoundingClientRect();
   const x = (event.clientX - rect.left) / rect.width;
@@ -110,14 +120,15 @@ editorPhoto.addEventListener("click", async (event) => {
   editorPhoto.replaceChildren(editorImage, stickerLayer(editingPhoto.stickers));
 });
 
+//tillbaka knapp 
 editorBack.addEventListener("click", () => {
   editor.hidden = true;
   overview.hidden = false;
   loadPhotos();
 });
 
+//Tar bort den senaste stickern via id i databsen
 const stickerUndo = document.getElementById("sticker-undo");
-
 stickerUndo.addEventListener("click", async () => {
   const last = editingPhoto.stickers[editingPhoto.stickers.length - 1];
   if (!last) {
@@ -133,6 +144,8 @@ stickerUndo.addEventListener("click", async () => {
   editorPhoto.replaceChildren(editorImage, stickerLayer(editingPhoto.stickers));
 });
 
+
+//sticker array, bygg en knapp för varje  emoji
 const stickerChoices = ["⭐", "❤️", "😎", "🎩", "🎃", "👻", "🔥", "🎉"];
 const stickerPalette = document.getElementById("sticker-palette");
 
@@ -151,6 +164,7 @@ for (const emoji of stickerChoices) {
   stickerPalette.append(button);
 }
 
+//visar user och gömmer log in etc
 function showUser(user) {
   currentUser = user;
   editor.hidden = true;
@@ -167,6 +181,7 @@ function showUser(user) {
   }
 }
 
+//kolla vem som är inloggad
 async function loadMe() {
   const { ok, data } = await api("/api/me");
   if (!ok) {
@@ -178,8 +193,8 @@ async function loadMe() {
 
 loadMe();
 
+//logga in visa en användare eller error
 const loginForm = document.getElementById("login-form");
-
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const username = document.getElementById("login-username").value;
@@ -200,6 +215,7 @@ loginForm.addEventListener("submit", async (event) => {
   showUser(data);
 });
 
+//log out och visa log in vy
 document.getElementById("logout-button").addEventListener("click", async () => {
   const { ok, data } = await api("/api/logout", { method: "POST" });
   if (!ok) {
@@ -210,8 +226,9 @@ document.getElementById("logout-button").addEventListener("click", async () => {
   showUser(null);
 });
 
-const registerForm = document.getElementById("register-form");
 
+//Registrera och skapa konto
+const registerForm = document.getElementById("register-form");
 registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const username = document.getElementById("register-username").value;
@@ -234,6 +251,7 @@ registerForm.addEventListener("submit", async (event) => {
   showUser(data);
 });
 
+//fil väljare
 const photoInput = document.getElementById("photo-input");
 const uploadStatus = document.getElementById("upload-status");
 
@@ -256,6 +274,7 @@ photoInput.addEventListener("change", async () => {
   loadPhotos();
 });
 
+//referenser till listor och status på sidan
 const gallery = document.getElementById("gallery");
 const galleryStatus = document.getElementById("gallery-status");
 const myPhotos = document.getElementById("my-photos");
@@ -266,10 +285,11 @@ const adminPanel = document.getElementById("admin-panel");
 const adminStatus = document.getElementById("admin-status");
 const adminList = document.getElementById("admin-list");
 
+//laddar och visar mina foton
 function loadMyPhotos() {
   renderPhotos("/api/photos?mine=1", myPhotos, myStatus, "Du har inga bilder än.", true);
 }
-
+//laddar publicerade bilder i gallery
 function loadGallery() {
   const params = new URLSearchParams({
     search: searchInput.value,
@@ -281,6 +301,7 @@ function loadGallery() {
   renderPhotos("/api/photos?" + params, gallery, galleryStatus, emptyText, false);
 }
 
+//Ladda foton för moderering
 async function loadAdmin() {
   adminStatus.textContent = "Laddar bilder...";
   const { ok, data: photos } = await api("/api/admin/photos");
@@ -340,7 +361,7 @@ async function loadAdmin() {
   }
 }
 
-
+//laddar flera fotoladdare
 function loadPhotos() {
   loadMyPhotos();
   loadGallery();
@@ -351,13 +372,16 @@ function loadPhotos() {
   }
 }
 
+//sök
 let searchTimer;
 searchInput.addEventListener("input", () => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(loadGallery, 300);
 });
+//ändrar ordningen (sortering)
 sortSelect.addEventListener("change", loadGallery);
 
+//Bygger foto kort och knappar
 async function renderPhotos(url, list, statusElement, emptyText, showStatus) {
   statusElement.textContent = "Laddar bilder...";
   const { ok, data: photos } = await api(url);

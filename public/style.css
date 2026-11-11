@@ -158,6 +158,7 @@ figcaption {
 .actions label {
     display: flex;
     flex: 1 1 100%;
+    min-width: 0;
     gap: 0.5rem;
     align-items: center;
 }
